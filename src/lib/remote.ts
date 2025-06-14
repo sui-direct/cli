@@ -72,9 +72,6 @@ export default class Remote extends P2P {
             const requestData = JSON.stringify({ id });
 
             await this.sink(cloneStream, requestData);
-            if (cloneStream?.sink?.end) {
-                await cloneStream.sink.end();
-            }
 
             // Receive streamed response
             const zipBuffer = await this.receiveStreamedContent(cloneStream);
@@ -121,5 +118,13 @@ export default class Remote extends P2P {
         }
 
         return response;
+    }
+
+    async list(owner: string) {
+        const res = await fetch(`${this.config.nodehttp}/list/${owner}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (data.status === false) return [];
+        return data.repositories || [];
     }
 }

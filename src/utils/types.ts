@@ -1,5 +1,3 @@
-import { PeerId } from "@libp2p/interface-peer-id";
-
 export interface IUser {
     peerID: string;
     publicKey: string;

@@ -16,7 +16,37 @@ export function repositoryCommands(program: Command, p2p: P2P) {
     repo.command("list")
         .description("List all repositories")
         .action(() => {
-            console.log("Listing all repositories...");
+            p2pStarter(p2p).then(_ => {
+                const authInstance = new Auth(_);
+                (authInstance.getUser() as Promise<{ data: IUser; token: string }>)
+                    .then(async user => {
+                        const remote = new Remote(_);
+                        const list = await remote.list(user.data.publicKey);
+
+                        console.log(
+                            colorize.successIcon(
+                                `Successfully fetched ${list.length} repositories for user ${colorize.highlight(user.data.publicKey)}.\n`,
+                            ),
+                        );
+
+                        for (const repo of list) {
+                            console.log(
+                                `${colorize.warning(repo.name)} - ${colorize.highlight(repo.blobID)}`,
+                            );
+                        }
+
+                        return process.exit(0);
+                    })
+                    .catch(error => {
+                        if (error) {
+                            console.log(colorize.errorIcon("An error occurred."));
+                            console.error(colorize.error(error));
+                        }
+                    })
+                    .finally(() => {
+                        process.exit(1);
+                    });
+            });
         });
 
     repo.command("rename")

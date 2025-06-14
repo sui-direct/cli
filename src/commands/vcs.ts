@@ -29,13 +29,14 @@ export function vcsCommands(program: Command, p2p: P2P) {
                     .then(async user => {
                         const remote = new Remote(_);
                         await remote.push(process.cwd());
+                        return process.exit(0);
                     })
                     .catch(error => {
                         console.error(colorize.errorIcon("Failed to push changes"));
                         if (error) console.error(colorize.error(error as string));
                     })
                     .finally(() => {
-                        process.exit(0);
+                        process.exit(1);
                     });
             });
         });
@@ -48,13 +49,21 @@ export function vcsCommands(program: Command, p2p: P2P) {
     program
         .command("clone")
         .description("Clone a remote repository")
-        .action(() => {});
+        .option("-r, --id <string>", "Remote repository ID or blob ID")
+        .action(options => {
+            if (!options.id) {
+                console.log(
+                    colorize.errorIcon(
+                        `Please provide a repository ID or blob ID using ${colorize.warning("-r")} or ${colorize.warning("--id")} option.`,
+                    ),
+                );
+                return;
+            }
 
-    program
-        .command("init")
-        .description("Initialize a new repository")
-        .action(() => {
-            directVCS("init");
+            p2pStarter(p2p).then(async (_: P2PInit) => {
+                const remote = new Remote(_);
+                await remote.clone(options.id);
+            });
         });
 
     // direct-vcs commands
@@ -69,6 +78,14 @@ export function vcsCommands(program: Command, p2p: P2P) {
               << "  status                  Show current branch and status\n";
      */
     program
+        .command("init")
+        .description("Initialize a new repository")
+        .action(() => {
+            directVCS("init");
+            process.exit(0);
+        });
+
+    program
         .command("commit")
         .description("Create a new commit")
         .option("-m, --message <string>", "Commit message")
@@ -82,6 +99,7 @@ export function vcsCommands(program: Command, p2p: P2P) {
                 return;
             }
             directVCS(`commit -m "${options.message}"`);
+            process.exit(0);
         });
 
     program
@@ -98,6 +116,7 @@ export function vcsCommands(program: Command, p2p: P2P) {
                 return;
             }
             directVCS(`branch "${options.name}"`);
+            process.exit(0);
         });
 
     program
@@ -114,6 +133,7 @@ export function vcsCommands(program: Command, p2p: P2P) {
                 return;
             }
             directVCS(`switch "${options.branch}"`);
+            process.exit(0);
         });
 
     program
@@ -130,6 +150,7 @@ export function vcsCommands(program: Command, p2p: P2P) {
                 return;
             }
             directVCS(`merge "${options.branch}"`);
+            process.exit(0);
         });
 
     program
@@ -137,5 +158,6 @@ export function vcsCommands(program: Command, p2p: P2P) {
         .description("Show current branch and status")
         .action(() => {
             directVCS("status");
+            process.exit(0);
         });
 }

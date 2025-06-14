@@ -1,7 +1,8 @@
 import ignore from "ignore";
 import { Zip } from "zip-lib";
+import * as zipLib from "zip-lib";
 import { join, relative } from "path";
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync, mkdirSync } from "fs";
 
 export async function zipFolderIgnoringGitignore(folderPath: string, password?: string) {
     const gitignorePath = join(folderPath, ".gitignore");
@@ -34,4 +35,18 @@ export async function zipFolderIgnoringGitignore(folderPath: string, password?: 
     return {
         name: zipName,
     };
+}
+
+export async function extractZipToFolder(zipPath: string, extractPath: string, password?: string) {
+    // Create the extraction directory if it doesn't exist
+    if (!existsSync(extractPath)) {
+        mkdirSync(extractPath, { recursive: true });
+    }
+
+    try {
+        // Use the zipLib.extract method (zip-lib's extract function)
+        await zipLib.extract(zipPath, extractPath);
+    } catch (error) {
+        throw new Error(`Failed to extract zip file: ${error}`);
+    }
 }

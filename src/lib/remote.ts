@@ -40,7 +40,7 @@ export default class Remote extends P2P {
             if (response?.status === false)
                 throw new Error(response.message || "An error occurred while pushing.");
 
-            console.log("\n")
+            console.log("\n");
             console.log(colorize.successIcon("Pushed successfully!"));
             console.log(
                 `\nBlob ID: ${colorize.highlight(response.blobId)}\nRepository ID: ${colorize.highlight(response.id)}`,
@@ -60,7 +60,48 @@ export default class Remote extends P2P {
         }
     }
 
-    async clone() {}
+    async clone(id: string) {
+        const spinner = ora(`Cloning repository ${id}`).start();
+        let cloneStream: any = null;
+
+        try {
+            // Create stream with retry logic
+            cloneStream = await this.connection.newStream(this.PULL_PROTOCOL);
+
+            // Send request
+            const requestData = JSON.stringify({ id });
+
+            await this.sink(cloneStream, requestData);
+            if (cloneStream?.sink?.end) {
+                await cloneStream.sink.end();
+            }
+
+            // Receive streamed response
+            const zipBuffer = await this.receiveStreamedContent(cloneStream);
+            console.log(`Received ${colorize.info(zipBuffer.length.toString())} bytes`);
+
+            // Process the received content
+            await this.processClonedContent(id, zipBuffer);
+
+            spinner.stop();
+            console.log("\n");
+            console.log(colorize.successIcon(`Repository cloned successfully!`));
+            console.log(`Repository extracted to: ${colorize.highlight(join(process.cwd(), id))}`);
+        } catch (err) {
+            spinner.stop();
+            console.error(colorize.errorIcon("Failed to clone repository"));
+            console.error(colorize.error(err as unknown as string));
+        } finally {
+            // Clean up stream
+            if (cloneStream) {
+                try {
+                    await cloneStream.close();
+                } catch (e) {
+                    console.log(colorize.warning("Failed to close clone stream"));
+                }
+            }
+        }
+    }
 
     async rename(newName: string, blobId?: string, id?: string) {
         const renameStream = await this.connection.newStream(this.RENAME_PROTOCOL);

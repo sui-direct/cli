@@ -18,6 +18,7 @@ export function authCommands(program: Command, p2p: P2P) {
                 .then(async _ => {
                     const authInstance = new Auth(_);
                     await authInstance.login(options?.wallet);
+                    return process.exit(0);
                 })
                 .catch(error => {
                     if (error) {
@@ -26,7 +27,7 @@ export function authCommands(program: Command, p2p: P2P) {
                     }
                 })
                 .finally(() => {
-                    process.exit(0);
+                    process.exit(1);
                 });
         });
 
@@ -39,6 +40,7 @@ export function authCommands(program: Command, p2p: P2P) {
                     .then(async () => {
                         authInstance.logout();
                         console.log(colorize.successIcon("Successfully logged out."));
+                        return process.exit(0);
                     })
                     .catch(error => {
                         if (error) {
@@ -47,7 +49,7 @@ export function authCommands(program: Command, p2p: P2P) {
                         }
                     })
                     .finally(() => {
-                        process.exit(0);
+                        process.exit(1);
                     });
             });
         });
@@ -71,7 +73,7 @@ export function authCommands(program: Command, p2p: P2P) {
                                 `WAL: ${colorize.highlight(normalizedWAL.toString())}`,
                         );
 
-                        process.exit(1);
+                        return process.exit(0);
                     })
                     .catch(error => {
                         if (error) {

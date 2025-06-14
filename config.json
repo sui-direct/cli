@@ -1,4 +1,9 @@
 {
     "node": "http://127.0.0.1:4002",
-    "nodehttp": "http://localhost:5000"
+    "nodehttp": "http://localhost:5000",
+    "peerID": {
+        "id": "12D3KooWRywao9sPvNEbV4DVfda5TBv6mxe9taUsbiFJ6f12kWTL",
+        "privKey": "CAESQAaRD9yl0BtEx19o8UvFf8ubIJDIjbIP3YZHer/wzzBR8C8ADh6FI49ZgZS+dEN6E53sJiWEr3aMQ/NMZUU/59M=",
+        "pubKey": "CAESIPAvAA4ehSOPWYGUvnRDehOd7CYlhK92jEPzTGVFP+fT"
+    }
 }

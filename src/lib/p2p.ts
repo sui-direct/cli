@@ -1,4 +1,6 @@
 /* Communication with Node */
+import { join } from "path";
+import { rmSync } from "fs";
 import { type Libp2p } from "libp2p";
 import { toString } from "uint8arrays/to-string";
 import type { PrivateKey } from "@libp2p/interface";
@@ -66,7 +68,6 @@ export default class P2P {
     protected VALIDATE_PROTOCOL: string = "/validate/1.0.0";
     protected PUSH_PROTOCOL: string = "/push/1.0.0";
     protected PULL_PROTOCOL: string = "/pull/1.0.0";
-    protected CLONE_PROTOCOL: string = "/clone/1.0.0";
     protected RENAME_PROTOCOL: string = "/rename/1.0.0";
 
     constructor() {
@@ -184,5 +185,61 @@ export default class P2P {
                 connection: this.connection,
             });
         });
+    }
+
+    // Helper method to receive streamed content
+    protected async receiveStreamedContent(stream: any): Promise<Buffer> {
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
+
+        for await (const chunk of stream.source) {
+            console.log(totalSize);
+            let buffer: Buffer;
+
+            // Handle different chunk types
+            if (chunk.constructor.name === "Uint8ArrayList") {
+                if (chunk.bufs && chunk.bufs.length > 0) {
+                    buffer = Buffer.concat(chunk.bufs);
+                } else {
+                    buffer = Buffer.from(chunk.slice());
+                }
+            } else if (chunk instanceof Buffer) {
+                buffer = chunk;
+            } else if (chunk instanceof Uint8Array) {
+                buffer = Buffer.from(chunk);
+            } else {
+                buffer = Buffer.from(chunk);
+            }
+
+            totalSize += buffer.length;
+            chunks.push(buffer);
+        }
+
+        return Buffer.concat(chunks);
+    }
+
+    // Helper method to process cloned content
+    protected async processClonedContent(id: string, zipBuffer: Buffer): Promise<void> {
+        const [{ writeFileSync }, { extractZipToFolder }] = await Promise.all([
+            import("fs").then(fs => ({ writeFileSync: fs.writeFileSync })),
+            import("../utils/zip").then(zipModule => ({
+                extractZipToFolder: zipModule.extractZipToFolder,
+            })),
+        ]);
+
+        // Create temporary zip file
+        const tempZipPath = join(process.cwd(), `${id}-temp.zip`);
+        writeFileSync(tempZipPath, zipBuffer);
+
+        // Extract to target directory
+        const extractPath = join(process.cwd(), id);
+        await extractZipToFolder(tempZipPath, extractPath);
+
+        try {
+            rmSync(tempZipPath, { force: true });
+        } catch (e) {
+            console.log(colorize.warning("Failed to clean up temporary zip file"));
+            console.error(e);
+        }
     }
 }

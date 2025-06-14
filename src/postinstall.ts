@@ -7,7 +7,12 @@ import { colorize } from "./utils/colors";
 import { Linux, MacOS, Windows } from "./utils/os";
 
 const binDir = join(__dirname, "..", "bin");
-const dest = join(binDir, "vcs.exe");
+
+let dest = join(binDir, "vcs.bin");
+Windows(() => {
+    dest = join(binDir, "vcs.exe");
+});
+
 const file = createWriteStream(dest);
 
 const installation = (res: IncomingMessage) => {
@@ -21,6 +26,7 @@ const installation = (res: IncomingMessage) => {
     }
 
     res.pipe(file);
+
     file.on("finish", () => {
         file.close();
         chmodSync(dest, 0o755);
